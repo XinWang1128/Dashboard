@@ -2,7 +2,7 @@ import seaborn as sns
 from faicons import icon_svg
 
 # Import data from shared.py
-from shared import app_dir, df
+from shared import app_dir, df, bv
 
 from shiny import reactive
 from shiny.express import input, render, ui
@@ -60,7 +60,11 @@ with ui.layout_column_wrap(fill=False):
 
         @render.text
         def population_female_percentage():
-            return "hellau"
+            total = bv.shape[0]
+            if total == 0:
+                return "Keine Daten"
+            women = bv[bv["Geschlecht"] == "w"].shape[0]
+            return f"{(women / total * 100):.1f} %"
 
     with ui.value_box(showcase=icon_svg("ruler-horizontal")):
         "Männeranteil in %"
@@ -224,4 +228,5 @@ def filtered_df():
     filt_df = df[df["species"].isin(input.species())]
     filt_df = filt_df.loc[filt_df["body_mass_g"] < input.mass()]
     return filt_df
+
 
