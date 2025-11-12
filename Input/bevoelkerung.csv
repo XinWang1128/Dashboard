@@ -1,0 +1,21 @@
+ID,Name,Alter,Geschlecht,Familienstand,Religion,Staatsangehörigkeit,Wohnort,Beruf,Einkommen
+1,Anna Müller,34,w,verheiratet,christlich,Deutschland,Ludwigshafen,Lehrerin,4200
+2,Mehmet Kaya,29,m,ledig,muslimisch,Deutschland,Mannheim,Ingenieur,4800
+3,Laura Becker,42,w,geschieden,konfessionslos,Deutschland,Mainz,Verwaltungsangestellte,3500
+4,Jonas Schneider,51,m,verheiratet,christlich,Deutschland,Speyer,Verkäufer,3100
+5,Sarah Levi,37,w,ledig,jüdisch,Deutschland,Frankfurt,Ärztin,6200
+6,Ali Rahman,45,m,verheiratet,muslimisch,Afghanistan,Ludwigshafen,Busfahrer,2800
+7,Julia Nguyen,23,w,ledig,buddhistisch,Vietnam,Heidelberg,Studentin,900
+8,Peter Hofmann,60,m,verwitwet,christlich,Deutschland,Kaiserslautern,Rentner,1900
+9,Aisha Hassan,33,w,verheiratet,muslimisch,Marokko,Ludwigshafen,Friseurin,2100
+10,David Wagner,27,m,ledig,konfessionslos,Deutschland,Karlsruhe,Softwareentwickler,4600
+11,Lina Petrova,39,w,verheiratet,orthodox,Russland,Worms,Krankenschwester,3300
+12,Thomas Braun,48,m,geschieden,christlich,Deutschland,Mainz,Polizist,3900
+13,Elena Rossi,31,w,ledig,katholisch,Italien,Mannheim,Designer,3700
+14,Ahmed Said,54,m,verheiratet,muslimisch,Ägypten,Ludwigshafen,Arzt,6700
+15,Clara Vogel,22,w,ledig,konfessionslos,Deutschland,Speyer,Studentin,850
+16,Martin Klein,40,m,verheiratet,christlich,Deutschland,Heidelberg,Techniker,3800
+17,Lea Zimmermann,28,w,ledig,konfessionslos,Deutschland,Mainz,Journalistin,3100
+18,Nina Hoff,35,w,verheiratet,christlich,Deutschland,Ludwigshafen,Erzieherin,2900
+19,Omar Farouk,41,m,verheiratet,muslimisch,Syrien,Kaiserslautern,Koch,2700
+20,Patrick Schmitt,56,m,geschieden,konfessionslos,Deutschland,Mannheim,Selbstständig,5100
