@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
-<<<<<<< HEAD
 from faicons import icon_svg
 import plotly.express as px
 import plotly.graph_objects as go
@@ -16,6 +15,7 @@ from ipyleaflet import Map
 # === Load population data ===
 # Expect columns: "Alter", "Männer", "Frauen", and optionally "Stadtteil"
 df_pyr = pd.read_excel("../Input/2022.xlsx")
+bv = pd.read_csv("../Input/bevoelkerung.csv")
 
 # Coerce types defensively
 if "Alter" in df_pyr.columns:
@@ -25,17 +25,6 @@ for col in ["Männer", "Frauen"]:
         df_pyr[col] = pd.to_numeric(df_pyr[col], errors="coerce").fillna(0)
 
 # === UI ===
-=======
-
-
-
-from shiny import reactive
-from shiny.express import input, render, ui
-df_pyr = pd.read_excel("../Input/2022.xlsx")
-bv = pd.read_csv("../Input/bevoelkerung.csv")
-
-
->>>>>>> 2b712ce38d4c6bc0ce98fbb355cad38bf0847c9f
 ui.page_opts(title="Ludwigshafen am Rhein - Dashboard", fillable=True)
 
 with ui.sidebar(title="Filter"):
@@ -54,7 +43,6 @@ with ui.sidebar(title="Filter"):
         ],
     )
 
-<<<<<<< HEAD
 
 # ------------------------- Dashboard -----------------------------------
 
@@ -77,17 +65,6 @@ with ui.layout_columns(fill=False):
 
 # === Pyramid ===
     with ui.card(full_screen=True):
-=======
-with ui.layout_columns(fill=False):  
-    
-    with ui.card():  
-        ui.card_header("Ludwigshafen auf einen Blick")
-        ui.p("Map here")
-
-    
-
-    with ui.card(fill=False):
->>>>>>> 2b712ce38d4c6bc0ce98fbb355cad38bf0847c9f
         ui.card_header("Alterspyramide")
 
         @render.plot
@@ -128,14 +105,6 @@ with ui.layout_columns(fill=False):
         ui.card_header("Bevölkerungsprognose")
         ui.p("Graph here")
 
-<<<<<<< HEAD
-with ui.layout_columns(fill=False):
-    with ui.card():
-        ui.card_header("Bevölkerungsprognose")
-        ui.p("Graph here")
-
-# === KPIs ===
-=======
 ### ^^^ Wang ^^^ ###
 ### vvv Walder vvv ###
 
@@ -145,8 +114,10 @@ with ui.layout_column_wrap(fill=False):
         "Wohnberechtigte Bevölkerung"
 
         @render.text
-        def count():
-            return "test"
+        def kpi_total():
+            d = agg_by_age()
+            total = int((d["Männer"].abs() + d["Frauen"]).sum())
+            return f"{total:,}".replace(",", ".")
         
     with ui.value_box(showcase=icon_svg("ruler-horizontal")):
         "Bevölkerung am Ort der Hauptwohnung"
@@ -195,27 +166,7 @@ with ui.layout_column_wrap(fill=False):
             return f"{bv['Alter'].mean():.1f} Jahre"
 
 
->>>>>>> 2b712ce38d4c6bc0ce98fbb355cad38bf0847c9f
 with ui.layout_column_wrap(fill=False):
-    with ui.value_box(showcase=icon_svg("earlybirds")):
-        "Wohnberechtigte Bevölkerung"
-
-        @render.text
-        def kpi_total():
-            d = agg_by_age()
-            total = int((d["Männer"].abs() + d["Frauen"]).sum())
-            return f"{total:,}".replace(",", ".")
-
-    with ui.value_box(showcase=icon_svg("genderless")):
-        "Frauenanteil in %"
-
-        @render.text
-        def kpi_female_share():
-            d = agg_by_age()
-            total = (d["Männer"].abs() + d["Frauen"]).sum()
-            female = d["Frauen"].sum()
-            pct = 0 if total == 0 else (female / total) * 100
-            return f"{pct:.1f} %"
 
     with ui.value_box(showcase=icon_svg("ruler-vertical")):
         "Durchschnittsalter in Jahren"
@@ -232,10 +183,6 @@ with ui.layout_column_wrap(fill=False):
             return f"{avg:.1f}"
 
 
-<<<<<<< HEAD
-# === Styling (optional) ===
-# ui.include_css(app_dir / "styles.css")  # Uncomment if you have styles.css
-=======
         @render.text
         def moved_in():
             return "hellau7"
@@ -261,7 +208,38 @@ with ui.layout_columns(fill=False):
 
     with ui.card():  
         ui.card_header("Religionszugehörigkeit")
-        ui.p("Tortendiagramm here")
+        @render_plotly
+        def religion_pie_plot():
+            import plotly.express as px
+            import plotly.graph_objects as go
+            import pandas as pd
+            # this function needs to be replaced with the common religion codes we use
+            # defensive checks
+            if "Religion" not in bv.columns or bv.shape[0] == 0:
+                fig = go.Figure()
+                fig.update_layout(title="Keine Religion-Daten verfügbar")
+                return fig
+
+            counts = bv["Religion"].fillna("keine Angabe").value_counts()
+
+            # limit to Top N, smaller religions will be summed up in "Andere"
+            top_n = 8
+            if len(counts) > top_n:
+                top = counts.nlargest(top_n)
+                others = counts.drop(top.index).sum()
+                counts = top.append(pd.Series({"Andere": others}))
+
+            # creating pie with potly
+            fig = px.pie(
+                names=counts.index,
+                values=counts.values,
+                title="",
+            )
+            fig.update_traces(textinfo="percent+label", textposition="inside")
+            fig.update_layout(margin=dict(t=40, b=10, l=10, r=10), legend_title_text=None)
+
+            return fig
+
 
 with ui.layout_columns(fill=False):  
     with ui.card():  
@@ -352,7 +330,6 @@ with ui.layout_column_wrap(fill=False):
 
 
 ui.include_css("styles.css")
->>>>>>> 2b712ce38d4c6bc0ce98fbb355cad38bf0847c9f
 
 # === Reactive helpers ===
 @reactive.calc
@@ -365,7 +342,6 @@ def filtered_rows():
     return d
 
 @reactive.calc
-<<<<<<< HEAD
 def agg_by_age():
     """
     Aggregate Männer/Frauen by Alter across the selected Stadtteile.
@@ -385,11 +361,4 @@ def agg_by_age():
     # Clean NaNs
     g[["Männer", "Frauen"]] = g[["Männer", "Frauen"]].fillna(0)
     return g
-=======
-def filtered_df():
-    filt_df = df[df["species"].isin(input.species())]
-    filt_df = filt_df.loc[filt_df["body_mass_g"] < input.mass()]
-    return filt_df
 
-
->>>>>>> 2b712ce38d4c6bc0ce98fbb355cad38bf0847c9f
