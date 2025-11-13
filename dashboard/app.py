@@ -1,5 +1,9 @@
 import seaborn as sns
 from faicons import icon_svg
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 
 # Import data from shared.py
 from shared import app_dir, df, bv
@@ -7,7 +11,16 @@ from shared import app_dir, df, bv
 from shiny import reactive
 from shiny.express import input, render, ui
 
+<<<<<<< HEAD
+
+# ---- NEW: load population data for the pyramid (separate name to avoid clashing) ----
+df_pyr = pd.read_excel("C:/Users/24634/Desktop/Dashboard/Dashboard/Input/2022.xlsx")
+
+
+ui.page_opts(title="Penguins dashboard", fillable=True)
+=======
 ui.page_opts(title="Ludwigshafen am Rhein - Dashboard", fillable=True)
+>>>>>>> 313f24b927075211f1dd636a0d27fc09573b1d84
 
 with ui.sidebar(title="Filter"):
 
@@ -58,6 +71,9 @@ with ui.layout_column_wrap(fill=False):
     with ui.value_box(showcase=icon_svg("earlybirds")):
         "Frauenanteil in %"
 
+<<<<<<< HEAD
+with ui.layout_columns():
+=======
         @render.text
         def population_female_percentage():
             total = bv.shape[0]
@@ -68,6 +84,7 @@ with ui.layout_column_wrap(fill=False):
 
     with ui.value_box(showcase=icon_svg("ruler-horizontal")):
         "Männeranteil in %"
+>>>>>>> 313f24b927075211f1dd636a0d27fc09573b1d84
 
         @render.text
         def population_male_percentage():
@@ -76,6 +93,43 @@ with ui.layout_column_wrap(fill=False):
     with ui.value_box(showcase=icon_svg("ruler-vertical")):
         "Durchschnittsalter in Jahren"
 
+<<<<<<< HEAD
+    with ui.card(full_screen=True):
+        ui.card_header("Alterspyramide")
+
+        @render.plot
+        def alterspyramide():
+            d = df_pyr.copy()
+            # negative for left side (men)
+            d["Männer"] = -d["Männer"]
+
+            fig, ax = plt.subplots(figsize=(10, 8))
+            ax.barh(d["Alter"], d["Männer"], label="Männer", color="steelblue")
+            ax.barh(d["Alter"], d["Frauen"], label="Frauen", color="lightcoral")
+
+            ax.set_xlabel("Bevölkerungszahl")
+            ax.set_ylabel("Alter")
+            ax.set_title("Bevölkerungspyramide")
+            ax.legend()
+
+            # symmetric x-limits
+            max_val = max(d["Frauen"].max(), abs(d["Männer"].min()))
+            ax.set_xlim(-max_val, max_val)
+
+            # show positive tick labels only
+            ax.xaxis.set_major_formatter(
+                mticker.FuncFormatter(lambda x, _: f"{abs(int(x)):,}")
+            )
+
+            # optional: classic pyramid look (youngest at bottom)
+            # ax.invert_yaxis()
+
+            plt.tight_layout()
+            return fig
+
+
+
+=======
         @render.text
         def average_age():
             return "hellau3"
@@ -219,6 +273,7 @@ with ui.layout_column_wrap(fill=False):
         def buying_index_households():
             return "hellau9"
  
+>>>>>>> 313f24b927075211f1dd636a0d27fc09573b1d84
 
 ui.include_css(app_dir / "styles.css")
 
