@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
+<<<<<<< HEAD
 from faicons import icon_svg
 import plotly.express as px
 import plotly.graph_objects as go
@@ -24,6 +25,17 @@ for col in ["Männer", "Frauen"]:
         df_pyr[col] = pd.to_numeric(df_pyr[col], errors="coerce").fillna(0)
 
 # === UI ===
+=======
+
+
+
+from shiny import reactive
+from shiny.express import input, render, ui
+df_pyr = pd.read_excel("../Input/2022.xlsx")
+bv = pd.read_csv("../Input/bevoelkerung.csv")
+
+
+>>>>>>> 2b712ce38d4c6bc0ce98fbb355cad38bf0847c9f
 ui.page_opts(title="Ludwigshafen am Rhein - Dashboard", fillable=True)
 
 with ui.sidebar(title="Filter"):
@@ -42,6 +54,7 @@ with ui.sidebar(title="Filter"):
         ],
     )
 
+<<<<<<< HEAD
 
 # ------------------------- Dashboard -----------------------------------
 
@@ -64,6 +77,17 @@ with ui.layout_columns(fill=False):
 
 # === Pyramid ===
     with ui.card(full_screen=True):
+=======
+with ui.layout_columns(fill=False):  
+    
+    with ui.card():  
+        ui.card_header("Ludwigshafen auf einen Blick")
+        ui.p("Map here")
+
+    
+
+    with ui.card(fill=False):
+>>>>>>> 2b712ce38d4c6bc0ce98fbb355cad38bf0847c9f
         ui.card_header("Alterspyramide")
 
         @render.plot
@@ -98,13 +122,80 @@ with ui.layout_columns(fill=False):
             fig.tight_layout()
             return fig
 
+with ui.layout_columns(fill=False):  
+    
+    with ui.card():  
+        ui.card_header("Bevölkerungsprognose")
+        ui.p("Graph here")
 
+<<<<<<< HEAD
 with ui.layout_columns(fill=False):
     with ui.card():
         ui.card_header("Bevölkerungsprognose")
         ui.p("Graph here")
 
 # === KPIs ===
+=======
+### ^^^ Wang ^^^ ###
+### vvv Walder vvv ###
+
+with ui.layout_column_wrap(fill=False):
+    
+    with ui.value_box(showcase=icon_svg("earlybirds")):
+        "Wohnberechtigte Bevölkerung"
+
+        @render.text
+        def count():
+            return "test"
+        
+    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
+        "Bevölkerung am Ort der Hauptwohnung"
+
+        @render.text
+        def bill_length():
+            return "test"
+
+    with ui.value_box(showcase=icon_svg("ruler-vertical")):
+        "Bevölkerung am Ort der Nebenwohnung"
+
+        @render.text
+        def bill_depth():
+            return "test"
+
+with ui.layout_column_wrap(fill=False):
+
+    with ui.value_box(showcase=icon_svg("earlybirds")):
+        "Frauenanteil in %"
+
+        @render.text
+        def population_female_percentage():
+            total = bv.shape[0]
+            if total == 0:
+                return "Keine Daten"
+            women = bv[bv["Geschlecht"] == "w"].shape[0]
+            return f"{(women / total * 100):.1f} %"
+
+    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
+        "Männeranteil in %"
+
+        @render.text
+        def population_male_percentage():
+            total = bv.shape[0]
+            if total == 0:
+                return "Keine Daten"
+            women = bv[bv["Geschlecht"] == "m"].shape[0]
+            return f"{(women / total * 100):.1f} %"
+ 
+
+    with ui.value_box(showcase=icon_svg("ruler-vertical")):
+        "Durchschnittsalter in Jahren"
+
+        @render.text
+        def age_average():
+            return f"{bv['Alter'].mean():.1f} Jahre"
+
+
+>>>>>>> 2b712ce38d4c6bc0ce98fbb355cad38bf0847c9f
 with ui.layout_column_wrap(fill=False):
     with ui.value_box(showcase=icon_svg("earlybirds")):
         "Wohnberechtigte Bevölkerung"
@@ -141,8 +232,127 @@ with ui.layout_column_wrap(fill=False):
             return f"{avg:.1f}"
 
 
+<<<<<<< HEAD
 # === Styling (optional) ===
 # ui.include_css(app_dir / "styles.css")  # Uncomment if you have styles.css
+=======
+        @render.text
+        def moved_in():
+            return "hellau7"
+
+    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
+        "Fortzüge"
+
+        @render.text
+        def moved_out():
+            return "hellau8"
+
+    with ui.value_box(showcase=icon_svg("ruler-vertical")):
+        "Salo Zu- und Fortzüge"
+
+        @render.text
+        def saldo_moved():
+            return "hellau9"
+
+with ui.layout_columns(fill=False):  
+    with ui.card():  
+        ui.card_header("Familienstand")
+        ui.p("Tortendiagramm here")
+
+    with ui.card():  
+        ui.card_header("Religionszugehörigkeit")
+        ui.p("Tortendiagramm here")
+
+with ui.layout_columns(fill=False):  
+    with ui.card():  
+        ui.card_header("Bevölkerung nach Migrationshintergrund")
+        ui.p("Tortendiagramm here")
+
+    with ui.card():  
+        ui.card_header("Häufigstes Bezugsland von Personen mit Migrationshintergrund")
+        ui.p("Tortendiagramm here")
+
+with ui.layout_columns(fill=False):  
+    with ui.card():  
+        ui.card_header("Privathaushalte")
+        ui.p("Tortendiagramm here")
+
+    with ui.card():  
+        ui.card_header("Wohnungen")
+        ui.p("Boxdiagramm here")
+
+with ui.layout_columns(fill=False):  
+    with ui.card():  
+        ui.card_header("Sinus-Milieus")
+        ui.p("Tortendiagramm here")
+
+    with ui.card():  
+        ui.card_header("Gemeinderatswahl 2024")
+        ui.p("Balkendiagramm here")
+
+with ui.layout_column_wrap(fill=False):
+    with ui.value_box(showcase=icon_svg("earlybirds")):
+        "Sozialversicherungspflichtig Beschäftigte"
+
+        @render.text
+        def insurance_workforce():
+            return "hellau7"
+
+    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
+        "Beschäftigungsquote in %"
+
+        @render.text
+        def workforce_percentage():
+            return "hellau8"
+
+    with ui.value_box(showcase=icon_svg("ruler-vertical")):
+        "Arbeitslose absolut"
+
+        @render.text
+        def num_jobless():
+            return "hellau9"
+
+    with ui.value_box(showcase=icon_svg("ruler-vertical")):
+        "Arbeitslosenquotient in %"
+
+        @render.text
+        def jobless_percentage():
+            return "hellau9"
+
+with ui.layout_column_wrap(fill=False):
+
+    with ui.value_box(showcase=icon_svg("earlybirds")):
+        "Durchschnittliche Kaufkraft pro Person in Euro"
+
+        @render.text
+        def buying_average():
+            return "hellau7"
+
+    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
+        "Kaufkraftindex pro Person"
+
+        @render.text
+        def buying_per_person():
+            return "hellau8"
+
+    with ui.value_box(showcase=icon_svg("ruler-vertical")):
+        "Durchschnittliche Kaufkraft pro Haushalt in Euro"
+
+        @render.text
+        def buying_average_households():
+            return "hellau9"
+
+    with ui.value_box(showcase=icon_svg("ruler-vertical")):
+        "Kaufkraftindex pro Haushalt"
+
+        @render.text
+        def buying_index_households():
+            return "hellau9"
+ 
+
+
+ui.include_css("styles.css")
+>>>>>>> 2b712ce38d4c6bc0ce98fbb355cad38bf0847c9f
 
 # === Reactive helpers ===
 @reactive.calc
@@ -155,6 +365,7 @@ def filtered_rows():
     return d
 
 @reactive.calc
+<<<<<<< HEAD
 def agg_by_age():
     """
     Aggregate Männer/Frauen by Alter across the selected Stadtteile.
@@ -174,3 +385,11 @@ def agg_by_age():
     # Clean NaNs
     g[["Männer", "Frauen"]] = g[["Männer", "Frauen"]].fillna(0)
     return g
+=======
+def filtered_df():
+    filt_df = df[df["species"].isin(input.species())]
+    filt_df = filt_df.loc[filt_df["body_mass_g"] < input.mass()]
+    return filt_df
+
+
+>>>>>>> 2b712ce38d4c6bc0ce98fbb355cad38bf0847c9f
