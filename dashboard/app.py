@@ -5,22 +5,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 
-# Import data from shared.py
-from shared import app_dir, df, bv
+
 
 from shiny import reactive
 from shiny.express import input, render, ui
-
-<<<<<<< HEAD
-
-# ---- NEW: load population data for the pyramid (separate name to avoid clashing) ----
-df_pyr = pd.read_excel("C:/Users/24634/Desktop/Dashboard/Dashboard/Input/2022.xlsx")
+df_pyr = pd.read_excel("../Input/2022.xlsx")
+bv = pd.read_csv("../Input/bevoelkerung.csv")
 
 
-ui.page_opts(title="Penguins dashboard", fillable=True)
-=======
 ui.page_opts(title="Ludwigshafen am Rhein - Dashboard", fillable=True)
->>>>>>> 313f24b927075211f1dd636a0d27fc09573b1d84
 
 with ui.sidebar(title="Filter"):
 
@@ -32,69 +25,14 @@ with ui.sidebar(title="Filter"):
     )
 
 with ui.layout_columns(fill=False):  
+    
     with ui.card():  
         ui.card_header("Ludwigshafen auf einen Blick")
         ui.p("Map here")
 
-    with ui.card():  
-        ui.card_header("Alterspyramide nach Migrationshintergrund")
-        ui.p("Graph here")
+    
 
-with ui.layout_columns(fill=False):  
-    with ui.card():  
-        ui.card_header("Bevölkerungsprognose")
-        ui.p("Graph here")
-
-with ui.layout_column_wrap(fill=False):
-    with ui.value_box(showcase=icon_svg("earlybirds")):
-        "Wohnberechtigte Bevölkerung"
-
-        @render.text
-        def count():
-            return filtered_df().shape[0]
-
-    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
-        "Bevölkerung am Ort der Hauptwohnung"
-
-        @render.text
-        def bill_length():
-            return f"{filtered_df()['bill_length_mm'].mean():.1f} mm"
-
-    with ui.value_box(showcase=icon_svg("ruler-vertical")):
-        "Bevölkerung am Ort der Nebenwohnung"
-
-        @render.text
-        def bill_depth():
-            return f"{filtered_df()['bill_depth_mm'].mean():.1f} mm"
-
-with ui.layout_column_wrap(fill=False):
-    with ui.value_box(showcase=icon_svg("earlybirds")):
-        "Frauenanteil in %"
-
-<<<<<<< HEAD
-with ui.layout_columns():
-=======
-        @render.text
-        def population_female_percentage():
-            total = bv.shape[0]
-            if total == 0:
-                return "Keine Daten"
-            women = bv[bv["Geschlecht"] == "w"].shape[0]
-            return f"{(women / total * 100):.1f} %"
-
-    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
-        "Männeranteil in %"
->>>>>>> 313f24b927075211f1dd636a0d27fc09573b1d84
-
-        @render.text
-        def population_male_percentage():
-            return "hellau2"
-
-    with ui.value_box(showcase=icon_svg("ruler-vertical")):
-        "Durchschnittsalter in Jahren"
-
-<<<<<<< HEAD
-    with ui.card(full_screen=True):
+    with ui.card(fill=False):
         ui.card_header("Alterspyramide")
 
         @render.plot
@@ -127,12 +65,70 @@ with ui.layout_columns():
             plt.tight_layout()
             return fig
 
+with ui.layout_columns(fill=False):  
+    
+    with ui.card():  
+        ui.card_header("Bevölkerungsprognose")
+        ui.p("Graph here")
 
+### ^^^ Wang ^^^ ###
+### vvv Walder vvv ###
 
-=======
+with ui.layout_column_wrap(fill=False):
+    
+    with ui.value_box(showcase=icon_svg("earlybirds")):
+        "Wohnberechtigte Bevölkerung"
+
         @render.text
-        def average_age():
-            return "hellau3"
+        def count():
+            return "test"
+        
+    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
+        "Bevölkerung am Ort der Hauptwohnung"
+
+        @render.text
+        def bill_length():
+            return "test"
+
+    with ui.value_box(showcase=icon_svg("ruler-vertical")):
+        "Bevölkerung am Ort der Nebenwohnung"
+
+        @render.text
+        def bill_depth():
+            return "test"
+
+with ui.layout_column_wrap(fill=False):
+
+    with ui.value_box(showcase=icon_svg("earlybirds")):
+        "Frauenanteil in %"
+
+        @render.text
+        def population_female_percentage():
+            total = bv.shape[0]
+            if total == 0:
+                return "Keine Daten"
+            women = bv[bv["Geschlecht"] == "w"].shape[0]
+            return f"{(women / total * 100):.1f} %"
+
+    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
+        "Männeranteil in %"
+
+        @render.text
+        def population_male_percentage():
+            total = bv.shape[0]
+            if total == 0:
+                return "Keine Daten"
+            women = bv[bv["Geschlecht"] == "m"].shape[0]
+            return f"{(women / total * 100):.1f} %"
+ 
+
+    with ui.value_box(showcase=icon_svg("ruler-vertical")):
+        "Durchschnittsalter in Jahren"
+
+        @render.text
+        def age_average():
+            return f"{bv['Alter'].mean():.1f} Jahre"
+
 
 with ui.layout_column_wrap(fill=False):
     with ui.value_box(showcase=icon_svg("earlybirds")):
@@ -273,9 +269,9 @@ with ui.layout_column_wrap(fill=False):
         def buying_index_households():
             return "hellau9"
  
->>>>>>> 313f24b927075211f1dd636a0d27fc09573b1d84
 
-ui.include_css(app_dir / "styles.css")
+
+ui.include_css("styles.css")
 
 
 @reactive.calc
