@@ -1,282 +1,176 @@
-import seaborn as sns
-from faicons import icon_svg
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
-
-# Import data from shared.py
-from shared import app_dir, df
-
+from faicons import icon_svg
+import plotly.express as px
+import plotly.graph_objects as go
 from shiny import reactive
 from shiny.express import input, render, ui
-
-<<<<<<< HEAD
-
-# ---- NEW: load population data for the pyramid (separate name to avoid clashing) ----
-df_pyr = pd.read_excel("C:/Users/24634/Desktop/Dashboard/Dashboard/Input/2022.xlsx")
+# ⬇️ add these imports for the map
+from shinywidgets import render_plotly, output_widget, render_widget
+from ipyleaflet import Map
 
 
-ui.page_opts(title="Penguins dashboard", fillable=True)
-=======
+# === Load population data ===
+# Expect columns: "Alter", "Männer", "Frauen", and optionally "Stadtteil"
+df_pyr = pd.read_excel("../Input/2022.xlsx")
+
+# Coerce types defensively
+if "Alter" in df_pyr.columns:
+    df_pyr["Alter"] = pd.to_numeric(df_pyr["Alter"], errors="coerce")
+for col in ["Männer", "Frauen"]:
+    if col in df_pyr.columns:
+        df_pyr[col] = pd.to_numeric(df_pyr[col], errors="coerce").fillna(0)
+
+# === UI ===
 ui.page_opts(title="Ludwigshafen am Rhein - Dashboard", fillable=True)
->>>>>>> 313f24b927075211f1dd636a0d27fc09573b1d84
 
 with ui.sidebar(title="Filter"):
-
     ui.input_checkbox_group(
         "city_districts",
         "Stadtteile",
-        ["Mitte", "Süd", "Nord/Hemshof", "West", "Friesenheim", "Gartenstadt", "Maudach", "Mundenheim", "Oggersheim", "Oppau", "Edigheim", "Pfingstweide", "Rheingönheim", "Ruchheim"],
-        selected=["Mitte", "Süd", "Nord/Hemshof", "West", "Friesenheim", "Gartenstadt", "Maudach", "Mundenheim", "Oggersheim", "Oppau", "Edigheim", "Pfingstweide", "Rheingönheim", "Ruchheim"],
+        [
+            "Mitte", "Süd", "Nord/Hemshof", "West", "Friesenheim",
+            "Gartenstadt", "Maudach", "Mundenheim", "Oggersheim",
+            "Oppau", "Edigheim", "Pfingstweide", "Rheingönheim", "Ruchheim",
+        ],
+        selected=[
+            "Mitte", "Süd", "Nord/Hemshof", "West", "Friesenheim",
+            "Gartenstadt", "Maudach", "Mundenheim", "Oggersheim",
+            "Oppau", "Edigheim", "Pfingstweide", "Rheingönheim", "Ruchheim",
+        ],
     )
 
-with ui.layout_columns(fill=False):  
-    with ui.card():  
-        ui.card_header("Ludwigshafen auf einen Blick")
-        ui.p("Map here")
 
-    with ui.card():  
-        ui.card_header("Alterspyramide nach Migrationshintergrund")
-        ui.p("Graph here")
+# ------------------------- Dashboard -----------------------------------
 
-with ui.layout_columns(fill=False):  
-    with ui.card():  
-        ui.card_header("Bevölkerungsprognose")
-        ui.p("Graph here")
+# Ludwigshafen Map
+with ui.layout_columns(fill=False):
+    with ui.card():
+        ui.card_header("Ludwigshafen Stadtteil")
+        # output_widget("lu_map")
 
-with ui.layout_column_wrap(fill=False):
-    with ui.value_box(showcase=icon_svg("earlybirds")):
-        "Wohnberechtigte Bevölkerung"
+#  ------------------------- Server / Map logic ---------------------------
 
-        @render.text
-        def count():
-            return filtered_df().shape[0]
+        @render_widget
+        def lu_map():
+            # Approx center of Ludwigshafen am Rhein
+            center = (49.4774, 8.4452)
+            # Simple ipyleaflet map; you can add layers/markers later
+            m = Map(center=center, zoom=12)
+            return m
 
-    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
-        "Bevölkerung am Ort der Hauptwohnung"
 
-        @render.text
-        def bill_length():
-            return f"{filtered_df()['bill_length_mm'].mean():.1f} mm"
-
-    with ui.value_box(showcase=icon_svg("ruler-vertical")):
-        "Bevölkerung am Ort der Nebenwohnung"
-
-        @render.text
-        def bill_depth():
-            return f"{filtered_df()['bill_depth_mm'].mean():.1f} mm"
-
-with ui.layout_column_wrap(fill=False):
-    with ui.value_box(showcase=icon_svg("earlybirds")):
-        "Frauenanteil in %"
-
-<<<<<<< HEAD
-with ui.layout_columns():
-=======
-        @render.text
-        def population_female_percentage():
-            return "hellau"
-
-    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
-        "Männeranteil in %"
->>>>>>> 313f24b927075211f1dd636a0d27fc09573b1d84
-
-        @render.text
-        def population_male_percentage():
-            return "hellau2"
-
-    with ui.value_box(showcase=icon_svg("ruler-vertical")):
-        "Durchschnittsalter in Jahren"
-
-<<<<<<< HEAD
+# === Pyramid ===
     with ui.card(full_screen=True):
         ui.card_header("Alterspyramide")
 
         @render.plot
         def alterspyramide():
-            d = df_pyr.copy()
-            # negative for left side (men)
-            d["Männer"] = -d["Männer"]
+            d = agg_by_age().copy()
 
-            fig, ax = plt.subplots(figsize=(10, 8))
-            ax.barh(d["Alter"], d["Männer"], label="Männer", color="steelblue")
-            ax.barh(d["Alter"], d["Frauen"], label="Frauen", color="lightcoral")
+            # Left side should be negative for Männer to mirror the pyramid
+            d_plot = d.copy()
+            d_plot["Männer"] = -d_plot["Männer"].abs()
+
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.barh(d_plot["Alter"], d_plot["Männer"], label="Männer")
+            ax.barh(d_plot["Alter"], d_plot["Frauen"], label="Frauen")
 
             ax.set_xlabel("Bevölkerungszahl")
             ax.set_ylabel("Alter")
             ax.set_title("Bevölkerungspyramide")
             ax.legend()
 
-            # symmetric x-limits
-            max_val = max(d["Frauen"].max(), abs(d["Männer"].min()))
+            # Symmetric x-limits
+            max_val = max(d_plot["Frauen"].max(), abs(d_plot["Männer"].min()))
             ax.set_xlim(-max_val, max_val)
 
-            # show positive tick labels only
+            # Show positive tick labels only
             ax.xaxis.set_major_formatter(
-                mticker.FuncFormatter(lambda x, _: f"{abs(int(x)):,}")
+                mticker.FuncFormatter(lambda x, _: f"{abs(int(x)):,}".replace(",", "."))
             )
 
-            # optional: classic pyramid look (youngest at bottom)
-            # ax.invert_yaxis()
+            # Optional: youngest at bottom (classic pyramid look)
+            #ax.invert_yaxis()
 
-            plt.tight_layout()
+            fig.tight_layout()
             return fig
 
 
+with ui.layout_columns(fill=False):
+    with ui.card():
+        ui.card_header("Bevölkerungsprognose")
+        ui.p("Graph here")
 
-=======
-        @render.text
-        def average_age():
-            return "hellau3"
-
+# === KPIs ===
 with ui.layout_column_wrap(fill=False):
     with ui.value_box(showcase=icon_svg("earlybirds")):
-        "Anzahl an Geburten"
+        "Wohnberechtigte Bevölkerung"
 
         @render.text
-        def num_births():
-            return "hellau4"
+        def kpi_total():
+            d = agg_by_age()
+            total = int((d["Männer"].abs() + d["Frauen"]).sum())
+            return f"{total:,}".replace(",", ".")
 
-    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
-        "Anzahl an Sterbefällen"
+    with ui.value_box(showcase=icon_svg("genderless")):
+        "Frauenanteil in %"
 
         @render.text
-        def num_deaths():
-            return "hellau5"
+        def kpi_female_share():
+            d = agg_by_age()
+            total = (d["Männer"].abs() + d["Frauen"]).sum()
+            female = d["Frauen"].sum()
+            pct = 0 if total == 0 else (female / total) * 100
+            return f"{pct:.1f} %"
 
     with ui.value_box(showcase=icon_svg("ruler-vertical")):
-        "Saldo Geburten und Sterbefälle"
+        "Durchschnittsalter in Jahren"
 
         @render.text
-        def saldo_birth_deaths():
-            return "hellau6"
+        def kpi_avg_age():
+            d = agg_by_age()
+            if d.empty or d["Alter"].isna().all():
+                return "–"
+            weights = (d["Männer"].abs() + d["Frauen"]).values
+            ages = d["Alter"].values
+            wsum = weights.sum()
+            avg = np.nan if wsum == 0 else float((ages * weights).sum() / wsum)
+            return f"{avg:.1f}"
 
-with ui.layout_column_wrap(fill=False):
-    with ui.value_box(showcase=icon_svg("earlybirds")):
-        "Zuzüge"
 
-        @render.text
-        def moved_in():
-            return "hellau7"
+# === Styling (optional) ===
+# ui.include_css(app_dir / "styles.css")  # Uncomment if you have styles.css
 
-    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
-        "Fortzüge"
-
-        @render.text
-        def moved_out():
-            return "hellau8"
-
-    with ui.value_box(showcase=icon_svg("ruler-vertical")):
-        "Salo Zu- und Fortzüge"
-
-        @render.text
-        def saldo_moved():
-            return "hellau9"
-
-with ui.layout_columns(fill=False):  
-    with ui.card():  
-        ui.card_header("Familienstand")
-        ui.p("Tortendiagramm here")
-
-    with ui.card():  
-        ui.card_header("Religionszugehörigkeit")
-        ui.p("Tortendiagramm here")
-
-with ui.layout_columns(fill=False):  
-    with ui.card():  
-        ui.card_header("Bevölkerung nach Migrationshintergrund")
-        ui.p("Tortendiagramm here")
-
-    with ui.card():  
-        ui.card_header("Häufigstes Bezugsland von Personen mit Migrationshintergrund")
-        ui.p("Tortendiagramm here")
-
-with ui.layout_columns(fill=False):  
-    with ui.card():  
-        ui.card_header("Privathaushalte")
-        ui.p("Tortendiagramm here")
-
-    with ui.card():  
-        ui.card_header("Wohnungen")
-        ui.p("Boxdiagramm here")
-
-with ui.layout_columns(fill=False):  
-    with ui.card():  
-        ui.card_header("Sinus-Milieus")
-        ui.p("Tortendiagramm here")
-
-    with ui.card():  
-        ui.card_header("Gemeinderatswahl 2024")
-        ui.p("Balkendiagramm here")
-
-with ui.layout_column_wrap(fill=False):
-    with ui.value_box(showcase=icon_svg("earlybirds")):
-        "Sozialversicherungspflichtig Beschäftigte"
-
-        @render.text
-        def insurance_workforce():
-            return "hellau7"
-
-    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
-        "Beschäftigungsquote in %"
-
-        @render.text
-        def workforce_percentage():
-            return "hellau8"
-
-    with ui.value_box(showcase=icon_svg("ruler-vertical")):
-        "Arbeitslose absolut"
-
-        @render.text
-        def num_jobless():
-            return "hellau9"
-
-    with ui.value_box(showcase=icon_svg("ruler-vertical")):
-        "Arbeitslosenquotient in %"
-
-        @render.text
-        def jobless_percentage():
-            return "hellau9"
-
-with ui.layout_column_wrap(fill=False):
-
-    with ui.value_box(showcase=icon_svg("earlybirds")):
-        "Durchschnittliche Kaufkraft pro Person in Euro"
-
-        @render.text
-        def buying_average():
-            return "hellau7"
-
-    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
-        "Kaufkraftindex pro Person"
-
-        @render.text
-        def buying_per_person():
-            return "hellau8"
-
-    with ui.value_box(showcase=icon_svg("ruler-vertical")):
-        "Durchschnittliche Kaufkraft pro Haushalt in Euro"
-
-        @render.text
-        def buying_average_households():
-            return "hellau9"
-
-    with ui.value_box(showcase=icon_svg("ruler-vertical")):
-        "Kaufkraftindex pro Haushalt"
-
-        @render.text
-        def buying_index_households():
-            return "hellau9"
- 
->>>>>>> 313f24b927075211f1dd636a0d27fc09573b1d84
-
-ui.include_css(app_dir / "styles.css")
-
+# === Reactive helpers ===
+@reactive.calc
+def filtered_rows():
+    """Filter by selected Stadtteile if the column exists; else return all rows."""
+    d = df_pyr.copy()
+    if "Stadtteil" in d.columns:
+        sel = set(input.city_districts())
+        d = d[d["Stadtteil"].isin(sel)]
+    return d
 
 @reactive.calc
-def filtered_df():
-    filt_df = df[df["species"].isin(input.species())]
-    filt_df = filt_df.loc[filt_df["body_mass_g"] < input.mass()]
-    return filt_df
-
+def agg_by_age():
+    """
+    Aggregate Männer/Frauen by Alter across the selected Stadtteile.
+    If 'Stadtteil' doesn't exist, this just groups the whole table.
+    """
+    d = filtered_rows()
+    required = {"Alter", "Männer", "Frauen"}
+    missing = required - set(d.columns)
+    if missing:
+        # Graceful empty frame if columns are missing
+        return pd.DataFrame(columns=["Alter", "Männer", "Frauen"])
+    g = (
+        d.groupby("Alter", as_index=False)[["Männer", "Frauen"]]
+        .sum(numeric_only=True)
+        .sort_values("Alter")
+    )
+    # Clean NaNs
+    g[["Männer", "Frauen"]] = g[["Männer", "Frauen"]].fillna(0)
+    return g
