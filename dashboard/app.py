@@ -32,7 +32,6 @@ for col in ["Männer", "Frauen"]:
         df_pyr[col] = pd.to_numeric(df_pyr[col], errors="coerce").fillna(0)
 
 # === UI ===
-
 ui.page_opts(title="Ludwigshafen am Rhein - Dashboard", fillable=True)
 
 with ui.sidebar(title="Filter"):
@@ -132,25 +131,6 @@ with ui.layout_columns(fill=False):
 
 # === KPIs ===
 with ui.layout_column_wrap(fill=False):
-    with ui.value_box(showcase=icon_svg("earlybirds")):
-        "Wohnberechtigte Bevölkerung"
-
-        @render.text
-        def kpi_total():
-            d = agg_by_age()
-            total = int((d["Männer"].abs() + d["Frauen"]).sum())
-            return f"{total:,}".replace(",", ".")
-
-    with ui.value_box(showcase=icon_svg("genderless")):
-        "Frauenanteil in %"
-
-        @render.text
-        def kpi_female_share():
-            d = agg_by_age()
-            total = (d["Männer"].abs() + d["Frauen"]).sum()
-            female = d["Frauen"].sum()
-            pct = 0 if total == 0 else (female / total) * 100
-            return f"{pct:.1f} %"
 
     with ui.value_box(showcase=icon_svg("ruler-vertical")):
         "Durchschnittsalter in Jahren"
