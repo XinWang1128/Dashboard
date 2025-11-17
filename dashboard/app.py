@@ -15,6 +15,8 @@ import folium
 
 # reusable pie_chart function
 from pie_chart import pie_chart_from_column
+# num data functions
+from num_data import num_population, per_population_female, per_population_male
 # === Load population data ===
 # Expect columns: "Alter", "Männer", "Frauen", and optionally "Stadtteil"
 df_pyr = pd.read_excel("../Input/2022.xlsx")
@@ -139,7 +141,7 @@ with ui.layout_column_wrap(fill=False):
 
         @render.text
         def population():
-            return "pop"
+            return num_population(bv)
 
     with ui.value_box(showcase=icon_svg("ruler-horizontal")):
         "Bevölkerung am Ort der Hauptwohnung"
@@ -161,18 +163,14 @@ with ui.layout_column_wrap(fill=False):
 
         @render.text
         def population_female_percentage():
-            total = bv.shape[0]
-            if total == 0:
-                return "Keine Daten"
-            women = bv[bv["Geschlecht"] == "w"].shape[0]
-            return f"{(women / total * 100):.1f} %"
+            return per_population_female(bv)
 
     with ui.value_box(showcase=icon_svg("ruler-horizontal")):
         "Männeranteil in %"
 
         @render.text
         def population_male_percentage():
-            return "hellau2"
+            return per_population_male(bv)
 
     with ui.value_box(showcase=icon_svg("ruler-vertical")):
         "Durchschnittsalter in Jahren"
@@ -232,7 +230,6 @@ with ui.layout_columns(fill=False):
         def family_pie():
             fig = pie_chart_from_column(bv, "Familienstand", top_n=8, title="")
             return fig
-
 
     with ui.card():  
         ui.card_header("Religionszugehörigkeit")
