@@ -13,16 +13,18 @@ from shiny.express import input, render, ui
 from ipyleaflet import Map, GeoJSON
 import folium
 
-# reusable pie_chart function
+# reusable chart functions
 from pie_chart import pie_chart_from_column
+from election_bar_chart import election_bar_chart
 # num data functions
-from num_data import num_population, per_population_female, per_population_male
+import num_data
 # === Load population data ===
 # Expect columns: "Alter", "Männer", "Frauen", and optionally "Stadtteil"
 df_pyr = pd.read_excel("../Input/2022.xlsx")
 df_st = gpd.read_file("../Input/stadtteil.geojson")
 bv = pd.read_csv("../Input/bevoelkerung.csv")
-
+wa = pd.read_csv("../Input/wahlen.csv")
+df_kos = pd.read_csv("../data/k5000.csv")
 # Ensure WGS84 for leaflet
 if df_st.crs is not None and df_st.crs.to_epsg() != 4326:
     df_st = df_st.to_crs(epsg=4326)
@@ -141,21 +143,21 @@ with ui.layout_column_wrap(fill=False):
 
         @render.text
         def population():
-            return num_population(bv)
+            return num_data.num_population(bv)
 
     with ui.value_box(showcase=icon_svg("ruler-horizontal")):
         "Bevölkerung am Ort der Hauptwohnung"
 
         @render.text
         def population_main():
-            return "200"
+            return num_data.num_population_main_household(df_kos)
 
     with ui.value_box(showcase=icon_svg("ruler-vertical")):
         "Bevölkerung am Ort der Nebenwohnung"
 
         @render.text
         def population_seconday():
-            return "100"
+            return num_data.num_population_secondary_household(df_kos)
 
 with ui.layout_column_wrap(fill=False):
     with ui.value_box(showcase=icon_svg("earlybirds")):
@@ -163,21 +165,21 @@ with ui.layout_column_wrap(fill=False):
 
         @render.text
         def population_female_percentage():
-            return per_population_female(bv)
+            return num_data.per_population_female(df_kos)
 
     with ui.value_box(showcase=icon_svg("ruler-horizontal")):
         "Männeranteil in %"
 
         @render.text
         def population_male_percentage():
-            return per_population_male(bv)
+            return num_data.per_population_male(df_kos)
 
     with ui.value_box(showcase=icon_svg("ruler-vertical")):
         "Durchschnittsalter in Jahren"
 
         @render.text
         def average_age():
-            return "hellau3"
+            return num_data.num_population_average_age(df_kos)
 
 with ui.layout_column_wrap(fill=False):
     with ui.value_box(showcase=icon_svg("earlybirds")):
@@ -185,21 +187,21 @@ with ui.layout_column_wrap(fill=False):
 
         @render.text
         def num_births():
-            return "hellau4"
+            return num_data.num_population_births(df_kos)
 
     with ui.value_box(showcase=icon_svg("ruler-horizontal")):
         "Anzahl an Sterbefällen"
 
         @render.text
         def num_deaths():
-            return "hellau5"
+            return num_data.num_population_deaths(df_kos)
 
     with ui.value_box(showcase=icon_svg("ruler-vertical")):
         "Saldo Geburten und Sterbefälle"
 
         @render.text
         def saldo_birth_deaths():
-            return "hellau6"
+            return num_data.diff_population_births_and_deaths(df_kos)
 
 with ui.layout_column_wrap(fill=False):
     with ui.value_box(showcase=icon_svg("earlybirds")):
@@ -207,21 +209,21 @@ with ui.layout_column_wrap(fill=False):
 
         @render.text
         def moved_in():
-            return "hellau7"
+            return num_data.num_population_moved_in(df_kos)
 
     with ui.value_box(showcase=icon_svg("ruler-horizontal")):
         "Fortzüge"
 
         @render.text
         def moved_out():
-            return "hellau8"
+            return num_data.num_population_moved_out(df_kos)
 
     with ui.value_box(showcase=icon_svg("ruler-vertical")):
         "Salo Zu- und Fortzüge"
 
         @render.text
         def saldo_moved():
-            return "hellau9"
+            return num_data.diff_population_moved(df_kos)
 
 with ui.layout_columns(fill=False):  
     with ui.card():  
@@ -235,7 +237,7 @@ with ui.layout_columns(fill=False):
         ui.card_header("Religionszugehörigkeit")
         @render_plotly
         def religion_pie():
-            fig = pie_chart_from_column(bv, "Religion", top_n=8, title="")
+            fig = pie_chart_from_column(df_kos, "Religion", top_n=8, title="")
             return fig
 
 with ui.layout_columns(fill=False):  
@@ -248,13 +250,19 @@ with ui.layout_columns(fill=False):
         
     with ui.card():  
         ui.card_header("Häufigstes Bezugsland von Personen mit Migrationshintergrund")
-        ui.p("Tortendiagramm here")
+        @render_plotly
+        def pop_migra_country_pie():
+            fig = pie_chart_from_column(bv, "Staatsangehörigkeit", top_n=8, title="")
+            return fig
 
 with ui.layout_columns(fill=False):  
     with ui.card():  
         ui.card_header("Privathaushalte")
-        ui.p("Tortendiagramm here")
-
+        @render_plotly
+        def pop_private_households():
+            fig = pie_chart_from_column(bv, "Staatsangehörigkeit", top_n=8, title="")
+            return fig
+        
     with ui.card():  
         ui.card_header("Wohnungen")
         ui.p("Boxdiagramm here")
@@ -262,11 +270,17 @@ with ui.layout_columns(fill=False):
 with ui.layout_columns(fill=False):  
     with ui.card():  
         ui.card_header("Sinus-Milieus")
-        ui.p("Tortendiagramm here")
+        @render_plotly
+        def pop_sinus_milieus():
+            fig = pie_chart_from_column(bv, "Staatsangehörigkeit", top_n=8, title="")
+            return fig
 
     with ui.card():  
         ui.card_header("Gemeinderatswahl 2024")
-        ui.p("Balkendiagramm here")
+        @render_plotly
+        def election_test_bar():
+            return election_bar_chart(wa, top_n=8, title="")
+
 
 with ui.layout_column_wrap(fill=False):
     with ui.value_box(showcase=icon_svg("earlybirds")):
@@ -274,28 +288,28 @@ with ui.layout_column_wrap(fill=False):
 
         @render.text
         def insurance_workforce():
-            return "hellau7"
+            return num_data.num_population_social_insurance_subject(df_kos)
 
     with ui.value_box(showcase=icon_svg("ruler-horizontal")):
         "Beschäftigungsquote in %"
 
         @render.text
         def workforce_percentage():
-            return "hellau8"
+            return num_data.per_population_with_jobs(df_kos)
 
     with ui.value_box(showcase=icon_svg("ruler-vertical")):
         "Arbeitslose absolut"
 
         @render.text
         def num_jobless():
-            return "hellau9"
+            return num_data.num_population_no_jobs(df_kos)
 
     with ui.value_box(showcase=icon_svg("ruler-vertical")):
         "Arbeitslosenquotient in %"
 
         @render.text
         def jobless_percentage():
-            return "hellau9"
+            return num_data.per_population_no_jobs(df_kos)
 
 with ui.layout_column_wrap(fill=False):
 
@@ -304,28 +318,28 @@ with ui.layout_column_wrap(fill=False):
 
         @render.text
         def buying_average():
-            return "hellau7"
+            return num_data.num_population_buying_average_person(df_kos)
 
     with ui.value_box(showcase=icon_svg("ruler-horizontal")):
         "Kaufkraftindex pro Person"
 
         @render.text
         def buying_per_person():
-            return "hellau8"
+            return num_data.num_population_buying_index_person(df_kos)
 
     with ui.value_box(showcase=icon_svg("ruler-vertical")):
         "Durchschnittliche Kaufkraft pro Haushalt in Euro"
 
         @render.text
         def buying_average_households():
-            return "hellau9"
+            return num_data.num_population_buying_average_household(df_kos)
 
     with ui.value_box(showcase=icon_svg("ruler-vertical")):
         "Kaufkraftindex pro Haushalt"
 
         @render.text
         def buying_index_households():
-            return "hellau9"
+            return num_data.num_population_buying_index_household(df_kos)
 
 
 # === Styling (optional) ===
