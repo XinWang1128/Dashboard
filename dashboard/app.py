@@ -10,9 +10,8 @@ from shinywidgets import render_plotly, render_widget
 from shiny.express import input, render, ui
 from ipyleaflet import Map as IpylMap, GeoJSON as IpylGeoJSON
 from ipywidgets import HTML
-from ipyleaflet import Map, Marker
+from ipyleaflet import Map, Marker, Popup, Polygon
 from shiny import reactive
-
 
 # reusable chart functions
 from pie_chart import pie_chart_from_column
@@ -160,6 +159,31 @@ with ui.layout_columns(fill=False):
                 popup_property=popup_content
             )
 
+
+
+            # ================ Walder =====================
+
+            # Fix attempt#1 Wir erstellen die Polygone so, wie leaflet es von uns will
+
+            for feature in geojson_data['features']:
+                print(feature['geometry']['coordinates'])
+                district_polygon = Polygon(
+                    locations=[feature['geometry']['coordinates']],
+                    color="#000",
+                    fill_color="#c90000"
+                )
+                m.add(district_polygon)
+
+                message_pop = HTML()
+
+                message_pop.value = feature['properties']['MIFSTADTT6']
+                message_pop.placeholder = "Placeholder Test"
+                message_pop.description = "DEscription test"
+
+                district_polygon.popup = message_pop
+
+            # ================ Walder =====================
+
             # Attach the feature click handler
             geo_layer.on_click(handle_feature_click)
 
@@ -228,26 +252,6 @@ with ui.layout_columns(fill=False):
 
             fig.tight_layout()
             return fig
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
             with ui.sidebar(title="Filter"):
