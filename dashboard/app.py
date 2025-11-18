@@ -12,13 +12,19 @@ from ipyleaflet import Map as IpylMap, GeoJSON as IpylGeoJSON
 from ipywidgets import HTML
 from ipyleaflet import Map, Marker
 from shiny import reactive
-
-
+import plotly.graph_objects as go
+from plotly.offline import init_notebook_mode, iplot
+from plotly.io import to_html
 # reusable chart functions
 from pie_chart import pie_chart_from_column
 from election_bar_chart import election_bar_chart
 # num data functions
 import num_data
+
+
+
+
+
 # === Load population data ===
 df_pyr = pd.read_excel("../Input/2022.xlsx")
 df_st = gpd.read_file("../Input/stadtteil.geojson")
@@ -39,19 +45,19 @@ clicked_district = reactive.Value("")
 clicked_einwohner = reactive.Value("")
 clicked_flaeche = reactive.Value("")
 # === UI ===
-ui.page_opts(title="Ludwigshafen am Rhein - Dashboard", fillable=True)
+ui.page_opts(title="Statistikdaten 2024 | Ludwigshafen am Rhein", fillable=True)
 
 # ------------------------- Dashboard -----------------------------------
 
 with ui.layout_columns(fill=False):
-    with ui.card():
+    with ui.card(style="height: 700px;"):
         ui.card_header("Ludwigshafen Stadtteile")
 
         @render_widget
         def lu_map():
             df_st_local = df_st
-            map_center = [49.48, 8.44]
-            m = IpylMap(center=map_center, zoom=11)
+            map_center = [49.49, 8.4]
+            m = IpylMap(center=map_center, zoom=12)
 
             # Prepare GeoJSON data with enhanced popup content
             geojson_data = df_st_local.__geo_interface__
@@ -161,6 +167,7 @@ with ui.layout_columns(fill=False):
             )
 
             # Attach the feature click handler
+
             geo_layer.on_click(handle_feature_click)
 
             m.add_layer(geo_layer)
@@ -194,13 +201,86 @@ with ui.layout_columns(fill=False):
 
 
     # === Pyramid ===
-    with ui.card(full_screen=True):
+    with ui.card(style="height: 700px;", full_screen=True):
         ui.card_header("Alterspyramide")
 
-        @render.plot
+        @render.ui
         def alterspyramide():
+            from plotly.io import to_html
+            import plotly.graph_objects as go
             d = agg_by_age().copy()
 
+            # Left side should be negative for Männer to mirror the pyramid
+            d_plot = d.copy()
+            d_plot["Männer"] = -d_plot["Männer"].abs()
+
+            # Create the plot using Plotly
+            fig = go.Figure()
+
+            # Add Men data (left side, negative values)
+            fig.add_trace(go.Bar(
+                y=d_plot["Alter"],
+                x=d_plot["Männer"]/1000,
+                orientation='h',
+                name='Männer',
+                marker=dict(color='light blue'),
+                hoverinfo='x+y+name',
+                hovertemplate='<b>Männer</b><br>Alter: %{y}<br>Anzahl: %{x}<extra></extra>'
+            ))
+
+            # Add Women data (right side, positive values)
+            fig.add_trace(go.Bar(
+                y=d_plot["Alter"],
+                x=d_plot["Frauen"]/1000,
+                orientation='h',
+                name='Frauen',
+                marker=dict(color='pink'),
+                hoverinfo='x+y+name',
+                hovertemplate='<b>Frauen</b><br>Alter: %{y}<br>Anzahl: %{x}<extra></extra>'
+            ))
+
+            # Update layout for pyramid appearance
+            fig.update_layout(
+                barmode='overlay',
+                yaxis=dict(
+                    title='Alter in Jahren',
+                    range=[0,100]  # Adjust range as needed
+                ),
+                xaxis=dict(
+                    title='Anzahl',
+                    # tickvals=[-150, -100, -50, 0, 50, 100, 150],
+                   # ticktext=['150', '50', '0', '50', '150'],
+                ),
+                showlegend=True,
+                #title="Bevölkerungspyramide",
+                bargap=0.1,
+                height=650,  # Set fixed height in pixels
+                width=None  # Let width be responsive
+            )
+
+            # Convert to HTML and return as UI
+            # Convert to HTML and wrap in responsive container
+            html_content = to_html(fig, include_plotlyjs=True, config={'responsive': True})
+            return ui.HTML(f'<div style="height: 100%; width: 100%;">{html_content}</div>')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            """
             # Left side should be negative for Männer to mirror the pyramid
             d_plot = d.copy()
             d_plot["Männer"] = -d_plot["Männer"].abs()
@@ -228,7 +308,7 @@ with ui.layout_columns(fill=False):
 
             fig.tight_layout()
             return fig
-
+            """
 
 
 
@@ -364,57 +444,57 @@ with ui.layout_column_wrap(fill=False):
         def saldo_moved():
             return num_data.diff_population_moved(df_kos)
 
-with ui.layout_columns(fill=False):  
-    with ui.card():  
+with ui.layout_columns(fill=False):
+    with ui.card():
         ui.card_header("Familienstand")
         @render_plotly
         def family_pie():
             fig = pie_chart_from_column(bv, "Familienstand", top_n=8, title="")
             return fig
 
-    with ui.card():  
+    with ui.card():
         ui.card_header("Religionszugehörigkeit")
         @render_plotly
         def religion_pie():
             fig = pie_chart_from_column(df_kos, "Religion", top_n=8, title="")
             return fig
 
-with ui.layout_columns(fill=False):  
-    with ui.card():  
+with ui.layout_columns(fill=False):
+    with ui.card():
         ui.card_header("Bevölkerung nach Migrationshintergrund")
         @render_plotly
         def pop_migra_pie():
             fig = pie_chart_from_column(bv, "Staatsangehörigkeit", top_n=8, title="")
             return fig
-        
-    with ui.card():  
+
+    with ui.card():
         ui.card_header("Häufigstes Bezugsland von Personen mit Migrationshintergrund")
         @render_plotly
         def pop_migra_country_pie():
             fig = pie_chart_from_column(bv, "Staatsangehörigkeit", top_n=8, title="")
             return fig
 
-with ui.layout_columns(fill=False):  
-    with ui.card():  
+with ui.layout_columns(fill=False):
+    with ui.card():
         ui.card_header("Privathaushalte")
         @render_plotly
         def pop_private_households():
             fig = pie_chart_from_column(bv, "Staatsangehörigkeit", top_n=8, title="")
             return fig
-        
-    with ui.card():  
+
+    with ui.card():
         ui.card_header("Wohnungen")
         ui.p("Boxdiagramm here")
 
-with ui.layout_columns(fill=False):  
-    with ui.card():  
+with ui.layout_columns(fill=False):
+    with ui.card():
         ui.card_header("Sinus-Milieus")
         @render_plotly
         def pop_sinus_milieus():
             fig = pie_chart_from_column(bv, "Staatsangehörigkeit", top_n=8, title="")
             return fig
 
-    with ui.card():  
+    with ui.card():
         ui.card_header("Gemeinderatswahl 2024")
         @render_plotly
         def election_test_bar():
