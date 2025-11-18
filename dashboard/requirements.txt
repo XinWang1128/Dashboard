@@ -7,3 +7,5 @@ shinywidgets
 numpy
 matplotlib
 ipyleaflet
+geopandas
+folium
