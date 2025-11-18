@@ -6,23 +6,21 @@ from faicons import icon_svg
 import plotly.express as px
 import plotly.graph_objects as go
 import geopandas as gpd
-from shinywidgets import render_plotly, output_widget, render_widget
-from ipyleaflet import Map
-from shiny import reactive
+from shinywidgets import render_plotly, render_widget
 from shiny.express import input, render, ui
-from ipyleaflet import Map, GeoJSON
-import folium
+from ipyleaflet import Map as IpylMap, GeoJSON as IpylGeoJSON
+from ipywidgets import HTML
+from ipyleaflet import Map, Marker
+from shiny import reactive
+
 
 # === Load population data ===
-# Expect columns: "Alter", "Männer", "Frauen", and optionally "Stadtteil"
 df_pyr = pd.read_excel("../Input/2022.xlsx")
 df_st = gpd.read_file("../Input/stadtteil.geojson")
 bv = pd.read_csv("../Input/bevoelkerung.csv")
 
 # Ensure WGS84 for leaflet
-if df_st.crs is not None and df_st.crs.to_epsg() != 4326:
-    df_st = df_st.to_crs(epsg=4326)
-
+df_st = df_st.set_crs(epsg=25832).to_crs(epsg=4326)
 
 # Coerce types defensively
 if "Alter" in df_pyr.columns:
@@ -30,63 +28,166 @@ if "Alter" in df_pyr.columns:
 for col in ["Männer", "Frauen"]:
     if col in df_pyr.columns:
         df_pyr[col] = pd.to_numeric(df_pyr[col], errors="coerce").fillna(0)
-
+# Create reactive values to store clicked feature info
+clicked_district = reactive.Value("")
+clicked_einwohner = reactive.Value("")
+clicked_flaeche = reactive.Value("")
 # === UI ===
 ui.page_opts(title="Ludwigshafen am Rhein - Dashboard", fillable=True)
 
-with ui.sidebar(title="Filter"):
-    ui.input_checkbox_group(
-        "city_districts",
-        "Stadtteile",
-        [
-            "Mitte", "Süd", "Nord/Hemshof", "West", "Friesenheim",
-            "Gartenstadt", "Maudach", "Mundenheim", "Oggersheim",
-            "Oppau", "Edigheim", "Pfingstweide", "Rheingönheim", "Ruchheim",
-        ],
-        selected=[
-            "Mitte", "Süd", "Nord/Hemshof", "West", "Friesenheim",
-            "Gartenstadt", "Maudach", "Mundenheim", "Oggersheim",
-            "Oppau", "Edigheim", "Pfingstweide", "Rheingönheim", "Ruchheim",
-        ],
-    )
-
-
 # ------------------------- Dashboard -----------------------------------
 
-# Ludwigshafen Map
 with ui.layout_columns(fill=False):
     with ui.card():
-        ui.card_header("Ludwigshafen Stadtteil")
-        #output_widget("lu_map")
-
-#  ------------------------- Server / Map logic ---------------------------
+        ui.card_header("Ludwigshafen Stadtteile")
 
         @render_widget
         def lu_map():
-        # Center roughly over Ludwigshafen
-            m = Map(center=(49.48, 8.44), zoom=12)
+            df_st_local = df_st
+            map_center = [49.48, 8.44]
+            m = IpylMap(center=map_center, zoom=11)
 
-            # Add the GeoJSON layer from GeoDataFrame
-            geo_layer = GeoJSON(
-                data=df_st.__geo_interface__,   # or: json.loads(df_st.to_json())
-                name="Stadtteile",
+            # Prepare GeoJSON data with enhanced popup content
+            geojson_data = df_st_local.__geo_interface__
+
+            # Define the district names and IDs from your example
+            district_info = {
+                "11": "Mitte",
+                "12": "Süd",
+                "13": "Nord",
+                "14": "West",
+                "15": "Friesenheim",
+                "21": "Oppau",
+                "22": "Edigheim",
+                "23": "Pfingstweide",
+                "31": "Oggersheim",
+                "35": "Ruchheim",
+                "41": "Maudach",
+                "51": "Mundenheim",
+                "52": "Rheingönheim",
+                "BASF": "BASF"
+            }
+
+            # Add popup content to each feature in the GeoJSON data
+            for feature in geojson_data['features']:
+                properties = feature.get('properties', {})
+
+                # Extract the specific fields
+                name = properties.get("MIFSTADTT6", "Unbekannter Stadtteil")
+                einwohner = properties.get("MIFSTADTT1", "k.A.")
+                flaeche = properties.get("MIFSTADTT3", "k.A.")
+
+                # Find district ID - FIXED: safer approach
+                district_id = None
+                for id, district_name in district_info.items():
+                    # Use the full district name for matching
+                    if district_name in name or name in district_name:
+                        district_id = id
+                        break
+                                # If no match found, try partial matching
+                if district_id is None:
+                    for id, district_name in district_info.items():
+                        # Extract main name part (before slash if exists)
+                        main_name = district_name.split('/')[0].split()[0] if '/' in district_name else district_name.split()[0]
+                        if main_name in name:
+                            district_id = id
+                            break
+
+
+                # Create enhanced popup content as HTML string
+                popup_content = f"""
+                <div style='padding: 10px; min-width: 250px;'>
+                    <h4 style='margin: 0 0 10px 0; color: #2c3e50;'>{name}</h4>
+                    <div style='border-top: 1px solid #eee; padding-top: 8px;'>
+                        <p style='margin: 5px 0;'><b>ID:</b> {district_id if district_id else 'N/A'}</p>
+                        <p style='margin: 5px 0;'><b>Einwohner:</b> {einwohner}</p>
+                        <p style='margin: 5px 0;'><b>Fläche:</b> {flaeche} ha</p>
+                    </div>
+                </div>
+                """
+
+                # Add popup to feature properties
+                feature['properties']['popup'] = popup_content
+
+                # Also add a simple tooltip property
+                feature['properties']['tooltip'] = f"{district_id} {name}" if district_id else name
+
+            # Updated click handler to update reactive values
+            def handle_feature_click(event, feature, **kwargs):
+                properties = feature.get("properties", {})
+                name = properties.get("MIFSTADTT6", "Unbekannter Stadtteil")
+                einwohner = properties.get("MIFSTADTT1", "k.A.")
+                flaeche = properties.get("MIFSTADTT3", "k.A.")
+
+                # Update reactive values
+                clicked_district.set(name)
+                clicked_einwohner.set(einwohner)
+                clicked_flaeche.set(flaeche)
+
+                # Still print to console for debugging
+                print(f"Clicked: {name}; Fläche: {flaeche}; Einwohner: {einwohner}")
+
+            # Hover handler to show polygon name
+            def handle_feature_hover(event, feature, **kwargs):
+                properties = feature.get("properties", {})
+                name = properties.get("MIFSTADTT6", "Unbekannter Stadtteil")
+                print(f"Hovering over: {name}")  # This will show in console
+                # You could also update a UI element here to show the name
+
+            # Create GeoJSON layer with your desired styling
+            geo_layer = IpylGeoJSON(
+                data=geojson_data,
                 style={
-                    "color": "blue",
-                    "weight": 2,
-                    "fillOpacity": 0.1,
+                    "color": "#000",           # Stroke color - black
+                    "weight": 1,               # Stroke width
+                    "opacity": 0.5,            # Stroke opacity
+                    "fillColor": "#c90000",    # Fill color - red
+                    "fillOpacity": 0.7,        # Fill opacity
                 },
                 hover_style={
-                    "color": "red",
-                    "weight": 3,
+                    "color": "white",          # Hover stroke color
+                    "weight": 3,               # Hover stroke width
+                    "fillColor": "#ff4444",    # Hover fill color (lighter red)
+                    "fillOpacity": 0.9,        # Hover fill opacity
                 },
+                # Enable popups
+                popup_property=popup_content
             )
+
+            # Attach the feature click handler
+            geo_layer.on_click(handle_feature_click)
 
             m.add_layer(geo_layer)
 
             return m
 
+        # Display the selected district information
+        @render.text
+        def selected_district():
+            if clicked_district():
+                return f"""Ausgewählter Stadtteil: {clicked_district()};
+        Einwohner: {clicked_einwohner()};
+        Fläche: {clicked_flaeche()} ha"""
+            else:
+                return "Klicken Sie auf einen Stadtteil in der Karte, um Informationen anzuzeigen"
+            # Right column - Selected district info and pyramid
+            with ui.card():
+                ui.card_header("Ausgewählter Stadtteil")
 
-# === Pyramid ===
+                @render.ui
+                def selected_district():
+                    if clicked_district():
+                        return ui.TagList(
+                            ui.h4(clicked_district()),
+                            ui.p(ui.strong("Einwohner: "), clicked_einwohner()),
+                            ui.p(ui.strong("Fläche: "), f"{clicked_flaeche()} ha"),
+                            ui.hr()
+                        )
+                    else:
+                        return ui.p("👆 Klicken Sie auf einen Stadtteil in der Karte, um Informationen anzuzeigen", style="color: #666;")
+
+
+    # === Pyramid ===
     with ui.card(full_screen=True):
         ui.card_header("Alterspyramide")
 
@@ -121,6 +222,44 @@ with ui.layout_columns(fill=False):
 
             fig.tight_layout()
             return fig
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            with ui.sidebar(title="Filter"):
+                ui.input_checkbox_group(
+                    "city_districts",
+                    "Stadtteile",
+                    [
+                        "Mitte", "Süd", "Nord/Hemshof", "West", "Friesenheim",
+                        "Gartenstadt", "Maudach", "Mundenheim", "Oggersheim",
+                        "Oppau", "Edigheim", "Pfingstweide", "Rheingönheim", "Ruchheim",
+                    ],
+                    selected=[
+                        "Mitte", "Süd", "Nord/Hemshof", "West", "Friesenheim",
+                        "Gartenstadt", "Maudach", "Mundenheim", "Oggersheim",
+                        "Oppau", "Edigheim", "Pfingstweide", "Rheingönheim", "Ruchheim",
+                    ],
+                )
+
 
 with ui.layout_columns(fill=False):
 
