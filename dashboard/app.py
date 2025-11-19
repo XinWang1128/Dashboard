@@ -59,7 +59,7 @@ with ui.layout_columns(fill=False):
 
             # Prepare GeoJSON data with enhanced popup content
             geojson_data = df_st_local.__geo_interface__
-
+            print(geojson_data)
             # Define the district names and IDs from your example
             district_info = {
                 "11": "Mitte",
@@ -132,14 +132,14 @@ with ui.layout_columns(fill=False):
 
                 # Still print to console for debugging
                 print(f"Clicked: {name}; Fläche: {flaeche}; Einwohner: {einwohner}")
-            """
+
             # Hover handler to show polygon name
             def handle_feature_hover(event, feature, **kwargs):
                 properties = feature.get("properties", {})
                 name = properties.get("MIFSTADTT6", "Unbekannter Stadtteil")
                 print(f"Hovering over: {name}")  # This will show in console
                 # You could also update a UI element here to show the name
-            """
+
             # Create GeoJSON layer with your desired styling
             geo_layer = IpylGeoJSON(
                 data=geojson_data,
@@ -147,13 +147,13 @@ with ui.layout_columns(fill=False):
                     "color": "#000",           # Stroke color - black
                     "weight": 1,               # Stroke width
                     "opacity": 0.5,            # Stroke opacity
-                    "fillColor": "#c90000",    # Fill color - red
+                    "fillColor": "#00c911",    # Fill color - green
                     "fillOpacity": 0.7,        # Fill opacity
                 },
                 hover_style={
                     "color": "white",          # Hover stroke color
                     "weight": 3,               # Hover stroke width
-                    "fillColor": "#ff4444",    # Hover fill color (lighter red)
+                    "fillColor": "#ff5444",    # Hover fill color (lighter red)
                     "fillOpacity": 0.9,        # Hover fill opacity
                 },
                 # Enable popups
@@ -167,11 +167,11 @@ with ui.layout_columns(fill=False):
             # Fix attempt#1 Wir erstellen die Polygone so, wie leaflet es von uns will
 
             for feature in geojson_data['features']:
-                print(feature['geometry']['coordinates'])
+                #print(feature['geometry']['coordinates'])
                 district_polygon = Polygon(
                     locations=[feature['geometry']['coordinates']],
                     color="#000",
-                    fill_color="#c90000"
+                    fill_color="#001885"
                 )
                 m.add(district_polygon)
 
@@ -193,34 +193,11 @@ with ui.layout_columns(fill=False):
 
             return m
 
-        """
+
         # Display the selected district information
-        @render.text
-        def selected_district():
-            if clicked_district():
-                # return fAusgewählter Stadtteil: {clicked_district()};
-        Einwohner: {clicked_einwohner()};
-        Fläche: {clicked_flaeche()} ha
-            else:
-                return "Klicken Sie auf einen Stadtteil in der Karte, um Informationen anzuzeigen"
 
-                # Right column - Selected district info and pyramid
-            with ui.card():
-                ui.card_header("Ausgewählter Stadtteil")
 
-                @render.ui
-                def selected_district():
-                    if clicked_district():
-                        return ui.TagList(
-                            ui.h4(clicked_district()),
-                            ui.p(ui.strong("Einwohner: "), clicked_einwohner()),
-                            ui.p(ui.strong("Fläche: "), f"{clicked_flaeche()} ha"),
-                            ui.hr()
-                        )
-                    else:
-                        return ui.p("👆 Klicken Sie auf einen Stadtteil in der Karte, um Informationen anzuzeigen", style="color: #666;")
 
-        """
     # === Pyramid ===
     with ui.card(style="height: 700px;", full_screen=True):
         ui.card_header("Alterspyramide")
@@ -340,7 +317,7 @@ with ui.layout_columns(fill=False):
 
 
 # === KPIs ===
-"""
+
 with ui.layout_column_wrap(fill=False):
     with ui.value_box(showcase=icon_svg("ruler-horizontal")):
         "Wohnberechtigte Bevölkerung"
@@ -562,8 +539,8 @@ with ui.layout_column_wrap(fill=False):
         @reactive.calc
         def agg_by_age():
 
-            Aggregate Männer/Frauen by Alter across the selected Stadtteile.
-            If 'Stadtteil' doesn't exist, this just groups the whole table.
+            # Aggregate Männer/Frauen by Alter across the selected Stadtteile.
+            # If 'Stadtteil' doesn't exist, this just groups the whole table.
 
             d = filtered_rows()
             required = {"Alter", "Männer", "Frauen"}
@@ -579,4 +556,3 @@ with ui.layout_column_wrap(fill=False):
             # Clean NaNs
             g[["Männer", "Frauen"]] = g[["Männer", "Frauen"]].fillna(0)
             return g
-"""
