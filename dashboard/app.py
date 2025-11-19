@@ -10,7 +10,7 @@ from shinywidgets import render_plotly, render_widget
 from shiny.express import input, render, ui
 from ipyleaflet import Map as IpylMap, GeoJSON as IpylGeoJSON
 from ipywidgets import HTML
-from ipyleaflet import Map, Marker
+from ipyleaflet import Map, Marker, Popup, Polygon
 from shiny import reactive
 import plotly.graph_objects as go
 from plotly.offline import init_notebook_mode, iplot
@@ -41,9 +41,7 @@ for col in ["Männer", "Frauen"]:
     if col in df_pyr.columns:
         df_pyr[col] = pd.to_numeric(df_pyr[col], errors="coerce").fillna(0)
 # Create reactive values to store clicked feature info
-clicked_district = reactive.Value("")
-clicked_einwohner = reactive.Value("")
-clicked_flaeche = reactive.Value("")
+
 # === UI ===
 ui.page_opts(title="Statistikdaten 2024 | Ludwigshafen am Rhein", fillable=True)
 
@@ -131,21 +129,17 @@ with ui.layout_columns(fill=False):
                 einwohner = properties.get("MIFSTADTT1", "k.A.")
                 flaeche = properties.get("MIFSTADTT3", "k.A.")
 
-                # Update reactive values
-                clicked_district.set(name)
-                clicked_einwohner.set(einwohner)
-                clicked_flaeche.set(flaeche)
 
                 # Still print to console for debugging
                 print(f"Clicked: {name}; Fläche: {flaeche}; Einwohner: {einwohner}")
-
+            """
             # Hover handler to show polygon name
             def handle_feature_hover(event, feature, **kwargs):
                 properties = feature.get("properties", {})
                 name = properties.get("MIFSTADTT6", "Unbekannter Stadtteil")
                 print(f"Hovering over: {name}")  # This will show in console
                 # You could also update a UI element here to show the name
-
+            """
             # Create GeoJSON layer with your desired styling
             geo_layer = IpylGeoJSON(
                 data=geojson_data,
@@ -163,9 +157,34 @@ with ui.layout_columns(fill=False):
                     "fillOpacity": 0.9,        # Hover fill opacity
                 },
                 # Enable popups
-                popup_property=popup_content
+
             )
 
+
+
+            # ================ Walder =====================-----------------------------------------------------
+
+            # Fix attempt#1 Wir erstellen die Polygone so, wie leaflet es von uns will
+
+            for feature in geojson_data['features']:
+                print(feature['geometry']['coordinates'])
+                district_polygon = Polygon(
+                    locations=[feature['geometry']['coordinates']],
+                    color="#000",
+                    fill_color="#c90000"
+                )
+                m.add(district_polygon)
+
+                message_pop = HTML()
+
+                message_pop.value = feature['properties']['MIFSTADTT6']
+                message_pop.placeholder = "Placeholder Test"
+                message_pop.description = "DEscription test"
+
+                district_polygon.popup = message_pop
+
+
+            # ================ Walder =====================--------------------------------------------
             # Attach the feature click handler
 
             geo_layer.on_click(handle_feature_click)
@@ -174,16 +193,18 @@ with ui.layout_columns(fill=False):
 
             return m
 
+        """
         # Display the selected district information
         @render.text
         def selected_district():
             if clicked_district():
-                return f"""Ausgewählter Stadtteil: {clicked_district()};
+                # return fAusgewählter Stadtteil: {clicked_district()};
         Einwohner: {clicked_einwohner()};
-        Fläche: {clicked_flaeche()} ha"""
+        Fläche: {clicked_flaeche()} ha
             else:
                 return "Klicken Sie auf einen Stadtteil in der Karte, um Informationen anzuzeigen"
-            # Right column - Selected district info and pyramid
+
+                # Right column - Selected district info and pyramid
             with ui.card():
                 ui.card_header("Ausgewählter Stadtteil")
 
@@ -199,7 +220,7 @@ with ui.layout_columns(fill=False):
                     else:
                         return ui.p("👆 Klicken Sie auf einen Stadtteil in der Karte, um Informationen anzuzeigen", style="color: #666;")
 
-
+        """
     # === Pyramid ===
     with ui.card(style="height: 700px;", full_screen=True):
         ui.card_header("Alterspyramide")
@@ -264,22 +285,6 @@ with ui.layout_columns(fill=False):
             return ui.HTML(f'<div style="height: 100%; width: 100%;">{html_content}</div>')
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
             """
             # Left side should be negative for Männer to mirror the pyramid
             d_plot = d.copy()
@@ -310,26 +315,6 @@ with ui.layout_columns(fill=False):
             return fig
             """
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
             with ui.sidebar(title="Filter"):
                 ui.input_checkbox_group(
                     "city_districts",
@@ -355,7 +340,7 @@ with ui.layout_columns(fill=False):
 
 
 # === KPIs ===
-
+"""
 with ui.layout_column_wrap(fill=False):
     with ui.value_box(showcase=icon_svg("ruler-horizontal")):
         "Wohnberechtigte Bevölkerung"
@@ -561,36 +546,37 @@ with ui.layout_column_wrap(fill=False):
             return num_data.num_population_buying_index_household(df_kos)
 
 
-# === Styling (optional) ===
-# ui.include_css(app_dir / "styles.css")  # Uncomment if you have styles.css
+        # === Styling (optional) ===
+        # ui.include_css(app_dir / "styles.css")  # Uncomment if you have styles.css
 
-# === Reactive helpers ===
-@reactive.calc
-def filtered_rows():
-    """Filter by selected Stadtteile if the column exists; else return all rows."""
-    d = df_pyr.copy()
-    if "Stadtteil" in d.columns:
-        sel = set(input.city_districts())
-        d = d[d["Stadtteil"].isin(sel)]
-    return d
+        # === Reactive helpers ===
+        @reactive.calc
+        def filtered_rows():
+            #Filter by selected Stadtteile if the column exists; else return all rows.
+            d = df_pyr.copy()
+            if "Stadtteil" in d.columns:
+                sel = set(input.city_districts())
+                d = d[d["Stadtteil"].isin(sel)]
+            return d
 
-@reactive.calc
-def agg_by_age():
-    """
-    Aggregate Männer/Frauen by Alter across the selected Stadtteile.
-    If 'Stadtteil' doesn't exist, this just groups the whole table.
-    """
-    d = filtered_rows()
-    required = {"Alter", "Männer", "Frauen"}
-    missing = required - set(d.columns)
-    if missing:
-        # Graceful empty frame if columns are missing
-        return pd.DataFrame(columns=["Alter", "Männer", "Frauen"])
-    g = (
-        d.groupby("Alter", as_index=False)[["Männer", "Frauen"]]
-        .sum(numeric_only=True)
-        .sort_values("Alter")
-    )
-    # Clean NaNs
-    g[["Männer", "Frauen"]] = g[["Männer", "Frauen"]].fillna(0)
-    return g
+        @reactive.calc
+        def agg_by_age():
+
+            Aggregate Männer/Frauen by Alter across the selected Stadtteile.
+            If 'Stadtteil' doesn't exist, this just groups the whole table.
+
+            d = filtered_rows()
+            required = {"Alter", "Männer", "Frauen"}
+            missing = required - set(d.columns)
+            if missing:
+                # Graceful empty frame if columns are missing
+                return pd.DataFrame(columns=["Alter", "Männer", "Frauen"])
+            g = (
+                d.groupby("Alter", as_index=False)[["Männer", "Frauen"]]
+                .sum(numeric_only=True)
+                .sort_values("Alter")
+            )
+            # Clean NaNs
+            g[["Männer", "Frauen"]] = g[["Männer", "Frauen"]].fillna(0)
+            return g
+"""
