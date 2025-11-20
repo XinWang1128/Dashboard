@@ -11,7 +11,7 @@ from shiny.express import input, render, ui
 from ipyleaflet import Map as IpylMap, GeoJSON as IpylGeoJSON
 from ipywidgets import HTML
 from ipyleaflet import Map, Marker, Popup, Polygon
-# from shiny import reactive, ui
+#from shiny import reactive, ui
 import plotly.graph_objects as go
 from plotly.offline import init_notebook_mode, iplot
 from plotly.io import to_html
@@ -395,21 +395,21 @@ with ui.layout_columns(fill=False):
 # === KPIs ===
 
 with ui.layout_column_wrap(fill=False):
-    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
+    with ui.value_box(showcase=icon_svg("people-roof")):
         "Wohnberechtigte Bevölkerung"
 
         @render.text
         def population():
             return num_data.num_population(bv)
 
-    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
+    with ui.value_box(showcase=icon_svg("building")):
         "Bevölkerung am Ort der Hauptwohnung"
 
         @render.text
         def population_main():
             return num_data.num_population_main_household(df_kos)
 
-    with ui.value_box(showcase=icon_svg("ruler-vertical")):
+    with ui.value_box(showcase=icon_svg("building")):
         "Bevölkerung am Ort der Nebenwohnung"
 
         @render.text
@@ -417,21 +417,21 @@ with ui.layout_column_wrap(fill=False):
             return num_data.num_population_secondary_household(df_kos)
 
 with ui.layout_column_wrap(fill=False):
-    with ui.value_box(showcase=icon_svg("earlybirds")):
+    with ui.value_box(showcase=icon_svg("venus")):
         "Frauenanteil in %"
 
         @render.text
         def population_female_percentage():
             return num_data.per_population_female(df_kos)
 
-    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
+    with ui.value_box(showcase=icon_svg("mars")):
         "Männeranteil in %"
 
         @render.text
         def population_male_percentage():
             return num_data.per_population_male(df_kos)
 
-    with ui.value_box(showcase=icon_svg("ruler-vertical")):
+    with ui.value_box(showcase=icon_svg("cake-candles")):
         "Durchschnittsalter in Jahren"
 
         @render.text
@@ -439,21 +439,21 @@ with ui.layout_column_wrap(fill=False):
             return num_data.num_population_average_age(df_kos)
 
 with ui.layout_column_wrap(fill=False):
-    with ui.value_box(showcase=icon_svg("earlybirds")):
+    with ui.value_box(showcase=icon_svg("baby-carriage")):
         "Anzahl an Geburten"
 
         @render.text
         def num_births():
             return num_data.num_population_births(df_kos)
 
-    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
+    with ui.value_box(showcase=icon_svg("cross")):
         "Anzahl an Sterbefällen"
 
         @render.text
         def num_deaths():
             return num_data.num_population_deaths(df_kos)
 
-    with ui.value_box(showcase=icon_svg("ruler-vertical")):
+    with ui.value_box(showcase=icon_svg("arrow-right-arrow-left")):
         "Saldo Geburten und Sterbefälle"
 
         @render.text
@@ -461,21 +461,21 @@ with ui.layout_column_wrap(fill=False):
             return num_data.diff_population_births_and_deaths(df_kos)
 
 with ui.layout_column_wrap(fill=False):
-    with ui.value_box(showcase=icon_svg("earlybirds")):
+    with ui.value_box(showcase=icon_svg("truck-ramp-box")):
         "Zuzüge"
 
         @render.text
         def moved_in():
             return num_data.num_population_moved_in(df_kos)
 
-    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
+    with ui.value_box(showcase=icon_svg("truck-moving")):
         "Fortzüge"
 
         @render.text
         def moved_out():
             return num_data.num_population_moved_out(df_kos)
 
-    with ui.value_box(showcase=icon_svg("ruler-vertical")):
+    with ui.value_box(showcase=icon_svg("arrow-right-arrow-left")):
         "Salo Zu- und Fortzüge"
 
         @render.text
@@ -547,7 +547,7 @@ with ui.layout_column_wrap(fill=False):
         def insurance_workforce():
             return num_data.num_population_social_insurance_subject(df_kos)
 
-    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
+    with ui.value_box(showcase=icon_svg("person-digging")):
         "Beschäftigungsquote in %"
 
         @render.text
@@ -570,28 +570,28 @@ with ui.layout_column_wrap(fill=False):
 
 with ui.layout_column_wrap(fill=False):
 
-    with ui.value_box(showcase=icon_svg("earlybirds")):
+    with ui.value_box(showcase=icon_svg("bag-shopping")):
         "Durchschnittliche Kaufkraft pro Person in Euro"
 
         @render.text
         def buying_average():
             return num_data.num_population_buying_average_person(df_kos)
 
-    with ui.value_box(showcase=icon_svg("ruler-horizontal")):
+    with ui.value_box(showcase=icon_svg("bag-shopping")):
         "Kaufkraftindex pro Person"
 
         @render.text
         def buying_per_person():
             return num_data.num_population_buying_index_person(df_kos)
 
-    with ui.value_box(showcase=icon_svg("ruler-vertical")):
+    with ui.value_box(showcase=icon_svg("bag-shopping")):
         "Durchschnittliche Kaufkraft pro Haushalt in Euro"
 
         @render.text
         def buying_average_households():
             return num_data.num_population_buying_average_household(df_kos)
 
-    with ui.value_box(showcase=icon_svg("ruler-vertical")):
+    with ui.value_box(showcase=icon_svg("bag-shopping")):
         "Kaufkraftindex pro Haushalt"
 
         @render.text
