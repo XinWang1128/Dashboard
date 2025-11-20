@@ -11,7 +11,7 @@ from shiny.express import input, render, ui
 from ipyleaflet import Map as IpylMap, GeoJSON as IpylGeoJSON
 from ipywidgets import HTML
 from ipyleaflet import Map, Marker, Popup, Polygon
-# from shiny import reactive, ui
+from shiny import reactive
 import plotly.graph_objects as go
 from plotly.offline import init_notebook_mode, iplot
 from plotly.io import to_html
@@ -20,7 +20,7 @@ from pie_chart import pie_chart_from_column
 from election_bar_chart import election_bar_chart
 # num data functions
 import num_data
-from shiny import reactive, ui as classic_ui  # classic_ui.include_html
+from ipyleaflet import Polygon
 
 # === Load population data ===
 df_pyr = pd.read_excel("../Input/2022.xlsx")
@@ -28,17 +28,6 @@ df_st = gpd.read_file("../Input/stadtteil.geojson")
 bv = pd.read_csv("../Input/bevoelkerung.csv")
 wa = pd.read_csv("../Input/wahlen.csv")
 df_kos = pd.read_csv("../data/k5000.csv")
-
-MAP_PATHS = {
-    "btn_lage":   r"../Input/Pkte_Arzt.html",
-    "btn_kita":   r"../Input/Pkte_Kita.html",
-    "btn_schule": r"../Input/Pkte_Schule.html",
-    "btn_arzt":   r"../Input/Pkte_Arzt.html",
-    "btn_opnv":   r"../Input/Pkte_Oepnv.html",
-}
-
-
-
 # Ensure WGS84 for leaflet
 df_st = df_st.set_crs(epsg=25832).to_crs(epsg=4326)
 
@@ -351,46 +340,9 @@ with ui.layout_columns(fill=False):
         ui.card_header("Bevölkerungsprognose")
         ui.p("Graph here")
 
-    with ui.card(style="height: 700px;"):
+    with ui.card():
         ui.card_header("Lagekriterium")
-        # --- Buttons wie in Dash ---
-        with ui.layout_columns(gap="0.5rem"):
-            ui.input_action_button("btn_lage",   "Pkte_Lage Map")
-            ui.input_action_button("btn_kita",   "Pkte_Kita Map")
-            ui.input_action_button("btn_schule", "Pkte_Schule Map")
-            ui.input_action_button("btn_arzt",   "Pkte_Arzt Map")
-            ui.input_action_button("btn_opnv",   "Pkte_Oepnv Map")
-
-        # --- Reactive: welcher Button "gewinnt"? ---
-        @reactive.calc
-        def current_map_key():
-            clicks = {
-                "btn_lage":   input.btn_lage(),
-                "btn_kita":   input.btn_kita(),
-                "btn_schule": input.btn_schule(),
-                "btn_arzt":   input.btn_arzt(),
-                "btn_opnv":   input.btn_opnv(),
-            }
-
-            # Standard: Lage, wenn noch nichts geklickt wurde
-            if all(v == 0 for v in clicks.values()):
-                return "btn_lage"
-
-            # Meistgedrückter Button = zuletzt ausgewählt
-            return max(clicks, key=clicks.get)
-
-        # --- "Graph here": hier kommt die Karte rein ---
-        @render.ui
-        def map_container():
-            key = current_map_key()
-            try:
-                with open(MAP_PATHS[key], 'r', encoding='utf-8') as file:
-                    html_content = file.read()
-                return ui.HTML(html_content)
-            except FileNotFoundError:
-                return ui.p(f"File not found: {MAP_PATHS[key]}")
-            except Exception as e:
-                return ui.p(f"Error loading map: {str(e)}")
+        ui.p("Graph here")
 
 # === KPIs ===
 
